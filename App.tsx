@@ -26,16 +26,11 @@ export default function App() {
   const date = new Date();
 
   const subscribe = async () => {
-    console.error("second");
-    const isAvailable = await Pedometer.isAvailableAsync();
-    console.error("third");
-    setIsPedometerAvailable(String(isAvailable));
-
-    if (isAvailable) {
-      console.error("fourth");
+    if (isPedometerAvailable) {
       const end = new Date();
       const start = new Date();
       start.setDate(end.getDate() - 1);
+      console.log("third", end, start);
 
       const pastStepCountResult = await Pedometer.getStepCountAsync(start, end);
       console.error(">>>>first", pastStepCountResult);
@@ -44,7 +39,8 @@ export default function App() {
         setPastStepCount(pastStepCountResult.steps);
       }
 
-      return Pedometer.watchStepCount((result) => {
+      Pedometer.watchStepCount((result) => {
+        console.log("fourth", result);
         setCurrentStepCount(result.steps);
       });
     }
@@ -103,11 +99,19 @@ export default function App() {
     //       console.log("err >>>", err);
     //     });
     // });
-    Pedometer.getPermissionsAsync();
-    useEffect(() => {
-      console.error("first");
-      subscribe();
-    }, []);
+    Pedometer.getPermissionsAsync().then((res) => {
+      console.log("first", res);
+    });
+    Pedometer.isAvailableAsync().then(
+      (res) => {
+        console.log("second", res);
+        setIsPedometerAvailable(String(res));
+        subscribe();
+      },
+      (error) => {
+        setIsPedometerAvailable(error);
+      }
+    );
   }
 
   if (Platform.OS === "ios") {
@@ -156,12 +160,15 @@ export default function App() {
     <View style={styles.container}>
       <Text>Open up App.tsx to start working on your app!</Text>
       <Text>Current state is: {appStateVisible}</Text>
-      <Text>
-        {Platform.OS === "ios"
-          ? "StepCountApple : " + iosStepCount
-          : // : "StepCountAndroid : " + aosStepCount}
-            "StepCountAndroid : " + currentStepCount}
-      </Text>
+      {Platform.OS === "ios" ? (
+        <Text>StepCountApple : {iosStepCount}</Text>
+      ) : (
+        // : <Text>StepCountAndroid : {aosStepCount}</Text>}
+        <>
+          <Text>StepCountAndroid : {currentStepCount}</Text>
+          <Text>isPedometerAvailable: {isPedometerAvailable}</Text>
+        </>
+      )}
       <StatusBar style="auto" />
     </View>
   );
